@@ -63,7 +63,7 @@ const resolvers = {
               c.name.toLowerCase().includes(args.query.toLowerCase()) ||
               c.email.toLowerCase().includes(args.query.toLowerCase())
           )
-        : contacts;
+        : contacts.slice(0, 10);
 
       return filtered;
     }
