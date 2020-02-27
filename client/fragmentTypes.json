@@ -1,0 +1,21 @@
+{
+  "__schema": {
+    "types": [
+      {
+        "kind": "UNION",
+        "name": "CluiOutput",
+        "possibleTypes": [
+          {
+            "name": "CluiSuccessOutput"
+          },
+          {
+            "name": "CluiMarkdownOutput"
+          },
+          {
+            "name": "CluiErrorOutput"
+          }
+        ]
+      }
+    ]
+  }
+}
