@@ -1,4 +1,7 @@
 const { ApolloServer, gql } = require('apollo-server-express');
+const { toCommand } = require('@replit/clui-gql');
+const { makeExecutableSchema } = require('graphql-tools');
+const { introspectionFromSchema } = require('graphql');
 const json2md = require('json2md');
 const faker = require('faker');
 
@@ -29,6 +32,10 @@ const typeDefs = gql`
     error: String!
   }
 
+  type Clui {
+    contacts: Contacts
+  }
+
   type Contact {
     name: String!
     email: String!
@@ -48,14 +55,15 @@ const typeDefs = gql`
 
   type Query {
     "Manage contacts"
-    contacts: Contacts
     search(query: String): [Contact!]!
+    clui: Clui!
+    command: String!
   }
 `;
 
 const resolvers = {
   Query: {
-    contacts: () => ({}),
+    clui: () => ({}),
     search: (ctx, args) => {
       const filtered = args.query
         ? contacts.filter(
@@ -66,6 +74,44 @@ const resolvers = {
         : contacts.slice(0, 10);
 
       return filtered;
+    },
+    command: (_, __, ___, { schema }) => {
+      const introspection = introspectionFromSchema(schema);
+
+      // Create a command tree from graphql introspection data. This could be done on
+      // the server or the client.
+      const root = toCommand({
+        // 'query' or 'mutation'
+        operation: 'query',
+
+        // The name of the graphql type that has the fields that act as top level commands
+        rootTypeName: 'Clui',
+
+        // the path at wich the above type appears in the graph
+        mountPath: ['clui'],
+
+        // GraphQL introspection data
+        introspectionSchema: introspection.__schema,
+
+        // Configure fields and fragments for the output of the GraphQL operation string
+        output: () => ({
+          fields: '...CluiOutput',
+          fragments: `
+fragment CluiOutput on CluiOutput {
+  ...on CluiSuccessOutput {
+    message
+  }
+  ...on CluiMarkdownOutput {
+    markdown
+  }
+  ...on CluiErrorOutput {
+    error
+  }
+}`
+        })
+      });
+
+      return JSON.stringify(root);
     }
   },
   Contacts: {

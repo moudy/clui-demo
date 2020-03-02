@@ -6,25 +6,24 @@ import merge from 'lodash.merge';
 import { useQuery, useApolloClient } from '@apollo/react-hooks';
 import { parse } from 'graphql';
 import { Session } from '@replit/clui-session';
-import { toCommand } from '@replit/clui-gql';
+import { visit } from '@replit/clui-gql';
 import QueryPrompt from './QueryPrompt';
 import MutationPrompt from './MutationPrompt';
-import TYPE_QUERY from './typeQuery';
 import clear from './commands/clear';
 import email from './commands/email';
 
 import Prompt from './Prompt';
 
-const makeCommand = (typeData, operationType) => {
-  const runFn = ({ operation, field, path }) => {
+const applyRunFn = command => {
+  // eslint-disable-next-line
+  command.run = ({ operation, field, path }) => {
     if (field.type.name !== 'CluiOutput') {
       // The type has no output so the command should have no `run` function
       // This type could still have sub-commands with output
       return null;
     }
 
-    console.log({ path });
-    const Component = operationType === 'query' ? QueryPrompt : MutationPrompt;
+    const Component = command.query === 'query' ? QueryPrompt : MutationPrompt;
 
     // eslint-disable-next-line react/prop-types
     return ({ args }) => (
@@ -38,28 +37,6 @@ const makeCommand = (typeData, operationType) => {
       />
     );
   };
-
-  return toCommand({
-    operation: operationType,
-    type: typeData,
-    mountPath: [],
-    runFn,
-    outputFn: () => ({
-      fields: '...CluiOutput',
-      fragments: `
-fragment CluiOutput on CluiOutput {
-  ...on CluiSuccessOutput {
-    message
-  }
-  ...on CluiMarkdownOutput {
-    markdown
-  }
-  ...on CluiErrorOutput {
-    error
-  }
-}`
-    })
-  });
 };
 
 const Terminal = () => {
@@ -79,9 +56,13 @@ const Terminal = () => {
       fetchPolicy: 'network-only'
     });
 
-  const { error, data } = useQuery(TYPE_QUERY, {
-    variables: { name: 'Query' }
-  });
+  const { error, data } = useQuery(
+    gql`
+      query {
+        command
+      }
+    `
+  );
 
   if (error) {
     return (
@@ -92,18 +73,13 @@ const Terminal = () => {
     );
   }
 
-  const command =
-    data && data.query
-      ? {
-          commands: merge(
-            { clear, email: email(search) },
-            makeCommand(data.query, 'query').commands
-          )
-        }
-      : null;
+  let command;
 
-  if (command && command.commands.search) {
-    delete command.commands.search;
+  if (data && data.command) {
+    command = JSON.parse(data.command);
+    visit(command, applyRunFn);
+    command.email = email;
+    command.clear = clear;
   }
 
   return (
