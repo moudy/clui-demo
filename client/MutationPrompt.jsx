@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMutation } from '@apollo/react-hooks';
+import { parseArgs } from '@replit/clui-gql';
 import Output from './Output';
-import { parseArgs } from './parseArgs';
 import ErrorOutput from './ErrorOutput';
 import PromptIcon from './PromptIcon';
 import Row from './Row';
@@ -13,10 +13,10 @@ const MutationPrompt = props => {
   const parsed = React.useMemo(
     () =>
       parseArgs({
-        argsProp: submitted || props.args || {},
-        fieldArgs: props.field.args
+        args: submitted || props.args || {},
+        command: props.command
       }),
-    [props.args, props.field.args, submitted]
+    [props.args, props.command, submitted]
   );
 
   const [mutate, { data, loading, error, called }] = useMutation(props.doc, {
@@ -63,7 +63,7 @@ const MutationPrompt = props => {
   if (parsed.missing.optional || parsed.missing.required) {
     return (
       <CliForm
-        field={props.field}
+        command={props.command}
         args={props.args}
         onSubmit={setSubmitted}
         onCancel={() => {
@@ -79,4 +79,3 @@ const MutationPrompt = props => {
 };
 
 export default MutationPrompt;
-

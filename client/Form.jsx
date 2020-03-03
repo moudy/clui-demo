@@ -95,16 +95,16 @@ const Description = ({ children }) => (
   </div>
 );
 
-// Generates a form base on graphql introspection data for a given field
+// Generates a form base on graphql introspection data for a given command
 const CliForm = props => {
-  const { field, args } = props;
+  const { command, args } = props;
 
   const initialState = Object.keys(args || {}).reduce((acc, key) => {
-    const fieldArg = field.args.find(fa => fa.name === key);
+    const arg = command.args.find(fa => fa.name === key);
 
-    if (fieldArg && args) {
+    if (arg && args) {
       const value = args[key];
-      const isBoolType = getScalarType(fieldArg.type) === 'Boolean';
+      const isBoolType = getScalarType(arg.type) === 'Boolean';
       const isUndefined = typeof value === 'undefined';
       const isBoolValue = typeof value === 'boolean';
 
@@ -130,41 +130,39 @@ const CliForm = props => {
     [dispatch]
   );
 
-  const autoFocusField = field.args.find(
-    fa => getScalarType(fa.type) !== 'Boolean' && !state[fa.name]
+  const autoFocuscommand = Object.values(command.args).find(
+    fa => fa.type !== 'boolean' && !state[fa.name]
   );
 
   return (
     <div className="wrap">
       <form onSubmit={onSubmit}>
-        {field.description ? <Title>{field.description}</Title> : null}
-        {field.args.map(fieldArg => {
+        {command.description ? <Title>{command.description}</Title> : null}
+        {Object.values(command.args).map(arg => {
           const common = {
-            key: fieldArg.name,
-            name: fieldArg.name,
+            key: arg.name,
+            name: arg.name,
             theme: props.theme,
-            required: isNonNull(fieldArg.type),
-            description: fieldArg.description || undefined
+            required: isNonNull(arg.type),
+            description: arg.description || undefined
           };
 
-          const value = state[fieldArg.name];
+          const value = state[arg.name];
 
-          return getScalarType(fieldArg.type) === 'Boolean' ? (
+          return arg.type === 'boolean' ? (
             <CheckboxInput
               {...common}
-              checked={!!state[fieldArg.name]}
+              checked={!!state[arg.name]}
               onChange={e => {
-                update({ [fieldArg.name]: e.currentTarget.checked });
+                update({ [arg.name]: e.currentTarget.checked });
               }}
             />
           ) : (
             <TextInput
               {...common}
-              autoFocus={
-                autoFocusField && autoFocusField.name === fieldArg.name
-              }
+              autoFocus={autoFocuscommand && autoFocuscommand.name === arg.name}
               value={typeof value === 'string' ? value : ''}
-              onChange={e => update({ [fieldArg.name]: e.currentTarget.value })}
+              onChange={e => update({ [arg.name]: e.currentTarget.value })}
             />
           );
         })}

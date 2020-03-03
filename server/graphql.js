@@ -1,6 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server-express');
 const { toCommand } = require('@replit/clui-gql');
-const { makeExecutableSchema } = require('graphql-tools');
 const { introspectionFromSchema } = require('graphql');
 const json2md = require('json2md');
 const faker = require('faker');
@@ -33,6 +32,7 @@ const typeDefs = gql`
   }
 
   type Clui {
+    "Manage contacts"
     contacts: Contacts
   }
 
@@ -54,7 +54,6 @@ const typeDefs = gql`
   }
 
   type Query {
-    "Manage contacts"
     search(query: String): [Contact!]!
     clui: Clui!
     command: String!
@@ -113,6 +112,9 @@ fragment CluiOutput on CluiOutput {
 
       return JSON.stringify(root);
     }
+  },
+  Clui: {
+    contacts: () => ({})
   },
   Contacts: {
     list: () => {

@@ -2,7 +2,6 @@ import React from 'react';
 import camelize from 'camelize';
 import gql from 'graphql-tag';
 import get from 'lodash.get';
-import merge from 'lodash.merge';
 import { useQuery, useApolloClient } from '@apollo/react-hooks';
 import { parse } from 'graphql';
 import { Session } from '@replit/clui-session';
@@ -14,29 +13,28 @@ import email from './commands/email';
 
 import Prompt from './Prompt';
 
+// eslint-disable-next-line
 const applyRunFn = command => {
+  if (command.outputType !== 'CluiOutput') {
+    // The type has no output so the command should have no `run` function
+    // This type could still have sub-commands with output
+    return null;
+  }
+
+  const Component = command.query ? QueryPrompt : MutationPrompt;
+  const source = command.query || command.mutation;
+
   // eslint-disable-next-line
-  command.run = ({ operation, field, path }) => {
-    if (field.type.name !== 'CluiOutput') {
-      // The type has no output so the command should have no `run` function
-      // This type could still have sub-commands with output
-      return null;
-    }
-
-    const Component = command.query === 'query' ? QueryPrompt : MutationPrompt;
-
-    // eslint-disable-next-line react/prop-types
-    return ({ args }) => (
-      <Component
-        args={camelize(args)}
-        field={field}
-        doc={parse(operation)}
-        toOutput={data => {
-          return get(data, path);
-        }}
-      />
-    );
-  };
+  command.run = ({ args }) => (
+    <Component
+      args={camelize(args)}
+      command={command}
+      doc={parse(source)}
+      toOutput={data => {
+        return get(data, command.path);
+      }}
+    />
+  );
 };
 
 const Terminal = () => {
@@ -78,8 +76,11 @@ const Terminal = () => {
   if (data && data.command) {
     command = JSON.parse(data.command);
     visit(command, applyRunFn);
-    command.email = email;
-    command.clear = clear;
+    command.commands = {
+      ...command.commands,
+      email: email(search),
+      clear
+    };
   }
 
   return (
