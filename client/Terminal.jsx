@@ -5,7 +5,7 @@ import get from 'lodash.get';
 import { useQuery, useApolloClient } from '@apollo/react-hooks';
 import { parse } from 'graphql';
 import { Session } from '@replit/clui-session';
-import { visit } from '@replit/clui-gql';
+import { forEach } from '@replit/clui-gql';
 import QueryPrompt from './QueryPrompt';
 import MutationPrompt from './MutationPrompt';
 import clear from './commands/clear';
@@ -14,7 +14,7 @@ import email from './commands/email';
 import Prompt from './Prompt';
 
 // eslint-disable-next-line
-const applyRunFn = command => {
+const applyRunFn = ({ command }) => {
   if (command.outputType !== 'CluiOutput') {
     // The type has no output so the command should have no `run` function
     // This type could still have sub-commands with output
@@ -75,7 +75,7 @@ const Terminal = () => {
 
   if (data && data.command) {
     command = JSON.parse(data.command);
-    visit(command, applyRunFn);
+    forEach(command, applyRunFn);
     command.commands = {
       ...command.commands,
       email: email(search),
