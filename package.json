@@ -40,7 +40,7 @@
     "json2md": "^1.7.0",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2",
-    "markdown-it": "^10.0.0",
+    "markdown-it": "^12.3.2",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-refresh": "^0.7.2",
