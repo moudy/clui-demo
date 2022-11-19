@@ -44,7 +44,7 @@
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-refresh": "^0.7.2",
-    "styled-jsx": "^3.2.4",
+    "styled-jsx": "^5.1.0",
     "webpack": "^5.0.0-beta.13",
     "webpack-dev-middleware": "^3.7.2",
     "webpack-hot-middleware": "^2.25.0"
